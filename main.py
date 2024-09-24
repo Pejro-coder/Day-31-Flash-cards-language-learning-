@@ -1,28 +1,43 @@
 from tkinter import *
 import random
 import pandas
-import time
 
 BACKGROUND_COLOR = "#B1DDC6"
 
-data = pandas.read_csv("data/french_words.csv")
+try:
+    data = pandas.read_csv("data/to learn.csv")
+except FileNotFoundError:
+    data = pandas.read_csv("data/french_words.csv")
 print(data)
 to_learn = data.to_dict(orient="records")
 print(to_learn)
+print(len(to_learn))
 
 
-# list_of_dicts = [{row['French']: row['English']} for _, row in data.iterrows()]
-# list_of_lists = [[row['French'], row['English']] for _, row in data.iterrows()]
-# print(list_of_dicts)
-# print(list_of_lists)
-
-
-# ----------------------------------WORD RESET LOGIC----------------------------------
-def next_card():
+# -----------------------------WORD RESET LOGIC/CARD TURN-----------------------------
+# logic problem. The next card is removed from "to learn" not the curren
+def checkmark():
+    global to_learn
     current_card = random.choice(to_learn)
+    to_learn.remove(current_card)
+    df = pandas.DataFrame(to_learn)
+    df.to_csv("data/to learn.csv", index=False)
+    print(len(to_learn))
     current_word = current_card["French"]
-    canvas.itemconfig(card_title, text="French")
-    canvas.itemconfig(card_text, text=current_word)
+    canvas.itemconfig(canvas_image, image=front_image)
+    canvas.itemconfig(card_title, text="French", fill="black")
+    canvas.itemconfig(card_text, text=current_word, fill="black")
+
+    window.after(3000, flip_card, current_card)
+
+
+def cross():
+    current_card = random.choice(to_learn)
+    print(len(to_learn))
+    current_word = current_card["French"]
+    canvas.itemconfig(canvas_image, image=front_image)
+    canvas.itemconfig(card_title, text="French", fill="black")
+    canvas.itemconfig(card_text, text=current_word, fill="black")
 
     window.after(3000, flip_card, current_card)
 
@@ -44,20 +59,20 @@ canvas = Canvas(width=800, height=526, highlightthickness=0, bg=BACKGROUND_COLOR
 back_image = PhotoImage(file="images/card_back.png")
 front_image = PhotoImage(file="images/card_front.png")
 canvas_image = canvas.create_image(400, 263, image=front_image)
-card_title = canvas.create_text(400, 150, text="BACK", fill="black", font=("Ariel", 26, "italic"))
-card_text = canvas.create_text(400, 260, text="word", fill="black", font=("Ariel", 32, "bold"))
+card_title = canvas.create_text(400, 150, text="", fill="black", font=("Ariel", 26, "italic"))
+card_text = canvas.create_text(400, 260, text="", fill="black", font=("Ariel", 32, "bold"))
 canvas.grid_configure(row=0, column=0, columnspan=2, pady=10)
 
 # Confirm button
 checkmark_image = PhotoImage(file="images/right.png")
-button_right = Button(image=checkmark_image, highlightthickness=0, command=next_card)
-button_right.grid_configure(row=1, column=0)
+button_right = Button(image=checkmark_image, highlightthickness=0, command=checkmark)
+button_right.grid_configure(row=1, column=1)
 
 # Wrong button
 cross_image = PhotoImage(file="images/wrong.png")
-button_left = Button(image=cross_image, highlightthickness=0, command=next_card)
-button_left.grid_configure(row=1, column=1)
+button_left = Button(image=cross_image, highlightthickness=0, command=cross)
+button_left.grid_configure(row=1, column=0)
 
-next_card()
+cross()
 
 mainloop()
